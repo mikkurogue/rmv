@@ -33,7 +33,7 @@ fn main() {
 
     if !path.exists() {
         eprintln!("Error: Path does not exist: {}", path.display());
-        return;
+        std::process::exit(0);
     }
 
     let total_files = count_files(&path);
@@ -41,7 +41,7 @@ fn main() {
 
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("🧹 {msg} [{bar:40.cyan/blue}] {pos}/{len} ({eta}) 🚀")
+            .template("🧹 {msg} [{bar:40.red/red}] {pos}/{len} ({eta}) 🚀")
             .unwrap()
             .progress_chars("█▓▒░ "),
     );
@@ -49,6 +49,7 @@ fn main() {
 
     if let Err(e) = delete_with_progress(&path, &pb) {
         eprintln!("Error deleting: {}: {}", path.display(), e);
+        std::process::exit(0);
     }
 
     pb.finish_with_message("Delete complete");
