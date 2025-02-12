@@ -1,8 +1,12 @@
 use indicatif::{ProgressBar, ProgressStyle};
+use rand::seq::IndexedRandom;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+
+/// Available progress bar colors
+const COLORS: &[&str] = &["red", "green", "yellow", "blue", "magenta", "cyan"];
 
 fn count_files(path: &Path) -> usize {
     WalkDir::new(path)
@@ -39,9 +43,15 @@ fn main() {
     let total_files = count_files(&path);
     let pb = ProgressBar::new(total_files as u64);
 
+    let mut rng = rand::rng();
+    let color = COLORS.choose(&mut rng).unwrap_or(&"blue");
+
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("🧹 {msg} [{bar:40.red/red}] {pos}/{len} ({eta}) 🚀")
+            .template(&format!(
+                "🧹 {{msg}} [{{bar:40.{}/blue}}] {{pos}}/{{len}} ({{eta}}) 🚀",
+                color
+            ))
             .unwrap()
             .progress_chars("█▓▒░ "),
     );
