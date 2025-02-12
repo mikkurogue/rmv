@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir -p artifacts
           cp target/release/rmv artifacts/
-          tar -czvf artifacts/rmv-linux.tar.gz -C artifacts YOUR_BINARY_NAME
+          tar -czvf artifacts/rmv-linux.tar.gz -C artifacts rmv
           rm artifacts/rmv
 
       - name: Create GitHub Release
