@@ -6,7 +6,33 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 /// Available progress bar colors
-const COLORS: &[&str] = &["red", "green", "yellow", "blue", "magenta", "cyan"];
+
+const COLORS: &[&str] = &[
+    "red",
+    "bright-red",
+    "dark-red",
+    "green",
+    "bright-green",
+    "dark-green",
+    "yellow",
+    "bright-yellow",
+    "gold",
+    "blue",
+    "bright-blue",
+    "dark-blue",
+    "cyan",
+    "bright-cyan",
+    "magenta",
+    "bright-magenta",
+    "purple",
+    "orange",
+    "bright-orange",
+    "pink",
+    "hot-pink",
+    "white",
+    "gray",
+    "silver",
+];
 
 fn count_files(path: &Path) -> usize {
     WalkDir::new(path)
@@ -36,7 +62,7 @@ fn main() {
     let path = PathBuf::from(path);
 
     if !path.exists() {
-        eprintln!("Error: Path does not exist: {}", path.display());
+        eprintln!("❌ Error: Path does not exist: {}", path.display());
         std::process::exit(0);
     }
 
@@ -49,18 +75,18 @@ fn main() {
     pb.set_style(
         ProgressStyle::default_bar()
             .template(&format!(
-                "🧹 {{msg}} [{{bar:40.{}/blue}}] {{pos}}/{{len}} ({{eta}}) 🚀",
+                "🧹 {{msg}} [{{bar:40.{}}}] {{pos}}/{{len}} ({{eta}}) 🚀",
                 color
             ))
             .unwrap()
-            .progress_chars("█▓▒░ "),
+            .progress_chars("▰▰▱▱ "),
     );
     pb.set_message("Removing...");
 
     if let Err(e) = delete_with_progress(&path, &pb) {
-        eprintln!("Error deleting: {}: {}", path.display(), e);
+        eprintln!("❌ Error deleting: {}: {}", path.display(), e);
         std::process::exit(0);
     }
 
-    pb.finish_with_message("Delete complete");
+    pb.finish_with_message("✅ Delete complete");
 }
