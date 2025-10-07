@@ -43,27 +43,38 @@ fn count_files(path: &Path) -> usize {
 }
 
 fn delete_with_progress(path: &Path, pb: &ProgressBar, is_verbose: bool) -> std::io::Result<()> {
-    for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
+    for entry in WalkDir::new(path)
+        .contents_first(true)
+        .into_iter()
+        .filter_map(Result::ok)
+    {
         let current_path = entry.path();
-        if current_path.is_file() {
-            if is_verbose {
-                verbose_log(&format!("Removing file: {}", current_path.display()));
-            }
-            fs::remove_file(current_path)?;
-            pb.inc(1);
-        } else if current_path.is_dir() {
-            if is_verbose {
-                verbose_log(&format!("Removing directory: {}", current_path.display()));
-            }
-            fs::remove_dir(current_path).ok();
-            pb.inc(1);
-        } else if current_path.is_symlink() {
-            if is_verbose {
-                verbose_log(&format!("Removing symlink: {}", current_path.display()));
-            }
-            fs::remove_file(current_path)?;
-            pb.inc(1);
+
+        let file_type = entry.file_type();
+
+        if is_verbose {
+            let type_str = if file_type.is_file() {
+                "file"
+            } else if file_type.is_dir() {
+                "directory"
+            } else {
+                "symlink"
+            };
+
+            verbose_log(&format!(
+                "Processing {}: {}",
+                type_str,
+                current_path.display()
+            ));
         }
+
+        if file_type.is_dir() {
+            fs::remove_dir(current_path)?;
+        } else {
+            fs::remove_file(current_path)?;
+        }
+
+        pb.inc(1);
     }
 
     Ok(())
@@ -106,6 +117,4 @@ fn main() {
         eprintln!("Error: {}: {}", path.display(), e);
         std::process::exit(0);
     }
-
-    pb.finish_with_message("Removal complete");
 }
