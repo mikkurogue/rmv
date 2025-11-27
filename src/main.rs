@@ -42,7 +42,10 @@ fn count_files(path: &Path) -> usize {
         .count()
 }
 
-fn delete_with_progress(path: &Path, pb: &ProgressBar, is_verbose: bool) -> std::io::Result<()> {
+fn delete_with_progress(path: &Path, pb: &ProgressBar, config: Config) -> std::io::Result<()> {
+    let is_verbose = config.verbose;
+    let show_current = config.show_current;
+
     for entry in WalkDir::new(path)
         .contents_first(true)
         .into_iter()
@@ -73,6 +76,9 @@ fn delete_with_progress(path: &Path, pb: &ProgressBar, is_verbose: bool) -> std:
         } else {
             fs::remove_file(current_path)?;
         }
+        if show_current {
+            pb.set_message(format!("{}", current_path.display()));
+        }
 
         pb.inc(1);
     }
@@ -85,11 +91,22 @@ fn verbose_log(message: &str) {
     print!("{}\n", message);
 }
 
+struct Config {
+    verbose: bool,
+    show_current: bool,
+}
+
 fn main() {
     let path = env::args().nth(1).expect("Usage: rmv <path>");
     let path = PathBuf::from(path);
 
     let is_verbose = env::args().any(|arg| arg == "-v" || arg == "--verbose");
+    let show_current = env::args().any(|arg| arg == "-c" || arg == "--current");
+
+    let config = Config {
+        verbose: is_verbose,
+        show_current,
+    };
 
     if !path.exists() {
         eprintln!("No such file or directory: {}", path.display());
@@ -113,7 +130,7 @@ fn main() {
     );
     pb.set_message("Removing...");
 
-    if let Err(e) = delete_with_progress(&path, &pb, is_verbose) {
+    if let Err(e) = delete_with_progress(&path, &pb, config) {
         eprintln!("Error: {}: {}", path.display(), e);
         std::process::exit(0);
     }
