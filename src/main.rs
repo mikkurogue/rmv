@@ -1,39 +1,15 @@
+use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::seq::IndexedRandom;
-use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-/// Available progress bar colors
+mod cli;
 
-const COLORS: &[&str] = &[
-    "red",
-    "bright-red",
-    "dark-red",
-    "green",
-    "bright-green",
-    "dark-green",
-    "yellow",
-    "bright-yellow",
-    "gold",
-    "blue",
-    "bright-blue",
-    "dark-blue",
-    "cyan",
-    "bright-cyan",
-    "magenta",
-    "bright-magenta",
-    "purple",
-    "orange",
-    "bright-orange",
-    "pink",
-    "hot-pink",
-    "white",
-    "gray",
-    "silver",
-];
+/// Available progress bar colors
+const COLORS: &[&str] = &["red", "green", "yellow", "blue", "cyan", "magenta", "white"];
 
 fn count_files(path: &Path) -> usize {
     WalkDir::new(path)
@@ -42,7 +18,11 @@ fn count_files(path: &Path) -> usize {
         .count()
 }
 
-fn delete_with_progress(path: &Path, pb: &ProgressBar, config: Config) -> std::io::Result<()> {
+fn delete_with_progress(
+    path: &Path,
+    pb: &ProgressBar,
+    config: ParsedConfig,
+) -> std::io::Result<()> {
     let is_verbose = config.verbose;
     let show_current = config.show_current;
 
@@ -91,22 +71,14 @@ fn verbose_log(message: &str) {
     print!("{}\n", message);
 }
 
-struct Config {
+struct ParsedConfig {
     verbose: bool,
     show_current: bool,
 }
 
 fn main() {
-    let path = env::args().nth(1).expect("Usage: rmv <path>");
-    let path = PathBuf::from(path);
-
-    let is_verbose = env::args().any(|arg| arg == "-v" || arg == "--verbose");
-    let show_current = env::args().any(|arg| arg == "-c" || arg == "--current");
-
-    let config = Config {
-        verbose: is_verbose,
-        show_current,
-    };
+    let args = cli::Args::parse();
+    let path = PathBuf::from(args.path);
 
     if !path.exists() {
         eprintln!("No such file or directory: {}", path.display());
@@ -116,8 +88,12 @@ fn main() {
     let total_files = count_files(&path);
     let pb = ProgressBar::new(total_files as u64);
 
-    let mut rng = rand::rng();
-    let color = COLORS.choose(&mut rng).unwrap_or(&"blue");
+    let color = if !args.color.is_empty() {
+        &args.color.as_str()
+    } else {
+        let mut rng = rand::rng();
+        COLORS.choose(&mut rng).unwrap_or(&"blue")
+    };
 
     pb.set_style(
         ProgressStyle::default_bar()
@@ -130,7 +106,14 @@ fn main() {
     );
     pb.set_message("Removing...");
 
-    if let Err(e) = delete_with_progress(&path, &pb, config) {
+    if let Err(e) = delete_with_progress(
+        &path,
+        &pb,
+        ParsedConfig {
+            verbose: args.verbose,
+            show_current: args.show_current,
+        },
+    ) {
         eprintln!("Error: {}: {}", path.display(), e);
         std::process::exit(0);
     }
