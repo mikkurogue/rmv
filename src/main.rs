@@ -1,7 +1,7 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::seq::IndexedRandom;
-use std::fs::{self, FileType};
+use std::fs::{self};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -63,7 +63,7 @@ fn delete_with_progress(
 
 fn verbose_log(message: &str) {
     std::io::stdout().flush().unwrap();
-    print!("{}\n", message);
+    println!("{}", message);
 }
 
 struct ParsedConfig {
