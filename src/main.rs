@@ -1,7 +1,7 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::seq::IndexedRandom;
-use std::fs;
+use std::fs::{self, FileType};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -36,12 +36,10 @@ fn delete_with_progress(
         let file_type = entry.file_type();
 
         if is_verbose {
-            let type_str = if file_type.is_file() {
-                "file"
-            } else if file_type.is_dir() {
-                "directory"
-            } else {
-                "symlink"
+            let type_str = match file_type {
+                t if t.is_file() => "file",
+                t if t.is_dir() => "directory",
+                _ => "symlink",
             };
 
             verbose_log(&format!(
@@ -51,11 +49,8 @@ fn delete_with_progress(
             ));
         }
 
-        if file_type.is_dir() {
-            fs::remove_dir(current_path)?;
-        } else {
-            fs::remove_file(current_path)?;
-        }
+        fs::remove_dir(current_path)?;
+
         if show_current {
             pb.set_message(format!("{}", current_path.display()));
         }
