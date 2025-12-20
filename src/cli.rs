@@ -16,4 +16,8 @@ pub struct Args {
     /// Show current file being deleted
     #[clap(short = 's', long)]
     pub show_current: bool,
+
+    /// Flush output of progress bar on completion
+    #[clap(short = 'f', long, default_value = "false")]
+    pub flush: bool,
 }

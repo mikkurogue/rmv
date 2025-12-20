@@ -49,7 +49,11 @@ fn delete_with_progress(
             ));
         }
 
-        fs::remove_dir(current_path)?;
+        if file_type.is_dir() {
+            fs::remove_dir(current_path)?;
+        } else {
+            fs::remove_file(current_path)?;
+        }
 
         if show_current {
             pb.set_message(format!("{}", current_path.display()));
@@ -90,15 +94,15 @@ fn main() {
         COLORS.choose(&mut rng).unwrap_or(&"blue")
     };
 
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&format!(
-                "{{msg}} [{{bar:40.{}}}] {{pos}}/{{len}} ({{eta}})",
-                color
-            ))
-            .unwrap()
-            .progress_chars("▰▰▱▱ "),
-    );
+    let progress_style = ProgressStyle::default_bar()
+        .template(&format!(
+            "{{msg}} [{{bar:40.{}}}] {{pos}}/{{len}} ({{eta}})",
+            color
+        ))
+        .unwrap()
+        .progress_chars("▰▰▱▱ ");
+
+    pb.set_style(progress_style);
     pb.set_message("Removing...");
 
     if let Err(e) = delete_with_progress(
@@ -111,5 +115,9 @@ fn main() {
     ) {
         eprintln!("Error: {}: {}", path.display(), e);
         std::process::exit(0);
+    }
+
+    if !args.flush {
+        pb.finish();
     }
 }
