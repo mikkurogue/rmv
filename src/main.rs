@@ -1,5 +1,6 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
+use rand::Rng;
 use rand::seq::IndexedRandom;
 use std::fs::{self};
 use std::io::Write;
@@ -90,8 +91,7 @@ fn main() {
     let color = if !args.color.is_empty() {
         &args.color.as_str()
     } else {
-        let mut rng = rand::rng();
-        COLORS.choose(&mut rng).unwrap_or(&"blue")
+        COLORS[rand::rng().random_range(0..COLORS.len())]
     };
 
     let progress_style = ProgressStyle::default_bar()
