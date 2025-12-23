@@ -1,6 +1,7 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::Rng;
+use std::error::Error;
 use std::fs::{self};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -65,9 +66,11 @@ fn delete_with_progress(
     Ok(())
 }
 
-fn verbose_log(message: &str) {
-    std::io::stdout().flush().unwrap();
+fn verbose_log(message: &str) -> Result<(), Box<dyn Error>> {
+    std::io::stdout().flush()?;
     println!("{}", message);
+
+    Ok(())
 }
 
 struct ParsedConfig {
@@ -75,7 +78,7 @@ struct ParsedConfig {
     show_current: bool,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::Args::parse();
     let path = PathBuf::from(args.path);
 
@@ -97,8 +100,7 @@ fn main() {
         .template(&format!(
             "{{msg}} [{{bar:40.{}}}] {{pos}}/{{len}} ({{eta}})",
             color
-        ))
-        .unwrap()
+        ))?
         .progress_chars("▰▰▱▱ ");
 
     pb.set_style(progress_style);
@@ -119,4 +121,6 @@ fn main() {
     if !args.flush {
         pb.finish();
     }
+
+    Ok(())
 }
