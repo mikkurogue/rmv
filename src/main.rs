@@ -1,7 +1,6 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::Rng;
-use rand::seq::IndexedRandom;
 use std::fs::{self};
 use std::io::Write;
 use std::path::{Path, PathBuf};
