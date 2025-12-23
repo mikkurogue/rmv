@@ -119,7 +119,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if !args.flush {
-        pb.finish();
+        pb.finish_with_message("Delete complete");
     }
 
     Ok(())
