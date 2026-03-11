@@ -5,6 +5,7 @@ use std::error::Error;
 use std::fs::{self};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use walkdir::WalkDir;
 
 mod cli;
@@ -24,6 +25,10 @@ fn create_progress_bar(loader_type: &str, bar_color: &str, total: u64) -> Progre
         "spinner" => ProgressBar::new_spinner(),
         _ => ProgressBar::new(total),
     };
+
+    if loader_type == "spinner" {
+        pb.enable_steady_tick(Duration::from_millis(200));
+    }
 
     let style = match loader_type {
         "spinner" => ProgressStyle::default_spinner()
