@@ -20,4 +20,8 @@ pub struct Args {
     /// Flush output of progress bar on completion
     #[clap(short = 'f', long, default_value = "false")]
     pub flush: bool,
+
+    /// Type of progress bar loader to use (e.g., "bar", "spinner")
+    #[clap(short = 'l', long, default_value = "bar")]
+    pub loader: String,
 }
