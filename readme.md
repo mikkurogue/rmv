@@ -10,3 +10,7 @@ Simply install the binary into your `/usr/local/bin/rmv` and away you go!
 ## Usage
 
 `rmv <path>` to delete the path. Then watch some magic happen.
+
+or
+
+`rmv <path> <another path>` to delete multiple paths incredible
