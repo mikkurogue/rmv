@@ -2,8 +2,8 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 pub struct Args {
-    /// Path to the directory or file to delete
-    pub path: String,
+    /// Path(s) to the directory or file to delete
+    pub paths: Vec<String>,
 
     /// Color of the progress bar
     #[clap(short, long, default_value = "green")]

@@ -108,38 +108,46 @@ struct ParsedConfig {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::Args::parse();
-    let path = PathBuf::from(args.path);
 
-    if !path.exists() {
-        eprintln!("No such file or directory: {}", path.display());
+    if args.paths.is_empty() {
+        eprintln!("Nothing to remove");
         std::process::exit(0);
     }
 
-    let total_files = count_files(&path);
+    for path in args.paths {
+        let path = PathBuf::from(path);
 
-    let color: &str = if !args.color.is_empty() {
-        &args.color
-    } else {
-        COLORS[rand::rng().random_range(0..COLORS.len())]
-    };
+        if !path.exists() {
+            eprintln!("No such file or directory: {}", path.display());
+            std::process::exit(0);
+        }
 
-    let pb = create_progress_bar(&args.loader, color, total_files as u64);
-    pb.set_message("Removing...");
+        let total_files = count_files(&path);
 
-    if let Err(e) = delete_with_progress(
-        &path,
-        &pb,
-        ParsedConfig {
-            verbose: args.verbose,
-            show_current: args.show_current,
-        },
-    ) {
-        eprintln!("Error: {}: {}", path.display(), e);
-        std::process::exit(0);
-    }
+        let color: &str = if !args.color.is_empty() {
+            &args.color
+        } else {
+            COLORS[rand::rng().random_range(0..COLORS.len())]
+        };
 
-    if !args.flush {
-        pb.finish_with_message("Delete complete");
+        let pb = create_progress_bar(&args.loader, color, total_files as u64);
+        pb.set_message("Removing...");
+
+        if let Err(e) = delete_with_progress(
+            &path,
+            &pb,
+            ParsedConfig {
+                verbose: args.verbose,
+                show_current: args.show_current,
+            },
+        ) {
+            eprintln!("Error: {}: {}", path.display(), e);
+            std::process::exit(0);
+        }
+
+        if !args.flush {
+            pb.finish_with_message("Delete complete");
+        }
     }
 
     Ok(())
@@ -148,8 +156,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::Args;
+    use clap::Parser;
     use std::fs::{self, File};
     use tempfile::tempdir;
+
+    #[test]
+    fn test_parse_multiple_paths() {
+        let args = Args::parse_from(["rmv", "folder1", "folder2", "file1"]);
+
+        assert_eq!(args.paths, vec!["folder1", "folder2", "file1"]);
+    }
+
+    #[test]
+    fn test_parse_empty_paths() {
+        let args = Args::parse_from(["rmv"]);
+
+        assert!(args.paths.is_empty());
+    }
 
     #[test]
     fn test_create_progress_bar_with_bar_loader() {
@@ -198,5 +222,39 @@ mod tests {
         let dir = tempdir().unwrap();
         // Just the directory itself
         assert_eq!(count_files(dir.path()), 1);
+    }
+
+    #[test]
+    fn test_can_delete_with_multiple_paths() {
+        let dir = tempdir().unwrap();
+        let dir1 = dir.path().join("folder1");
+        let dir2 = dir.path().join("folder2");
+        let file1 = dir.path().join("file1.txt");
+
+        fs::create_dir(&dir1).unwrap();
+        fs::create_dir(&dir2).unwrap();
+        File::create(dir1.join("a.txt")).unwrap();
+        File::create(dir2.join("b.txt")).unwrap();
+        File::create(&file1).unwrap();
+
+        let paths = vec![&dir1, &dir2, &file1];
+
+        for path in &paths {
+            let t = count_files(path);
+            let pb = create_progress_bar("bar", "green", t as u64);
+            delete_with_progress(
+                path,
+                &pb,
+                ParsedConfig {
+                    verbose: false,
+                    show_current: false,
+                },
+            )
+            .unwrap();
+        }
+
+        assert!(!dir1.exists());
+        assert!(!dir2.exists());
+        assert!(!file1.exists());
     }
 }
